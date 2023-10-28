@@ -1,0 +1,189 @@
+import java.util.ArrayList;
+ 
+import java.util.Arrays;
+ 
+import java.util.List;
+ 
+public class Main
+{
+    
+    public static class Edge
+    {
+ 
+      int src, dest;
+ 
+ 
+        Edge (int src, int dest)
+      {
+ 
+    this.src = src;
+ 
+    this.dest = dest;
+ 
+      }
+    }
+ 
+  public static class Graph
+  {
+ 
+ 
+      List < List < Integer >> adj = new ArrayList <> ();
+ 
+ 
+    public Graph (List < Edge > edges)
+    {
+ 
+ 
+      int n = 0;
+ 
+      for (Edge e:edges)
+    {
+ 
+      n = Integer.max (n, Integer.max (e.src, e.dest));
+ 
+    }
+ 
+ 
+      for (int i = 0; i <= n; i++)
+    {
+ 
+      adj.add (i, new ArrayList <> ());
+ 
+    }
+    for (Edge current:edges)
+    {
+ 
+      adj.get (current.src).add (current.dest);
+ 
+    }
+ 
+    }
+ 
+ 
+    public void printGraph ()
+    {
+ 
+      int src = 0;
+ 
+      int n = this.adj.size ();
+ 
+ 
+      while (src < n)
+    {
+ 
+    for (int dest:this.adj.get (src))
+ 
+        System.out.print ("(" + src + " --> " + dest + ")\t");
+ 
+      System.out.println ();
+ 
+      src++;
+ 
+    }
+    }
+ 
+    public static ArrayList < Graph > DiamondGraph (Graph graph)
+    {
+ 
+      ArrayList < Graph > result = new ArrayList < Graph > ();
+      // store previously found sources that create a diamond so that we dont have to iterate over them again.
+      ArrayList <Integer> cachedDiamondsSources = new ArrayList<Integer>();
+      int n = graph.adj.size ();
+      int potentialSrcA = 0;
+// loops through every diamond finding iteration
+      while (potentialSrcA < n)
+    {
+      // iterate over source A destinations
+    for (int destFromA:graph.adj.get (potentialSrcA))
+    {
+            
+          int potentialSrcB = 0;
+            // loop to find a canidate for a second source
+          while (potentialSrcB < n)
+            {
+                if(potentialSrcB == potentialSrcA){
+                   potentialSrcB++; 
+                    continue;
+                    
+                }else if(cachedDiamondsSources.contains(potentialSrcB)){ // diamond has already been found, no need to recreate it again.
+                    break;
+                }
+                // iterate over source B destinations
+                for (int destFromB:graph.adj.get (potentialSrcB))
+                    {
+                        // if two distenations match
+                    if (destFromA == destFromB)
+                {
+                  //potential Diamond , two sources sharing the same destination
+                  // time to find a common parent
+                  int sharedParent = 0;
+                  // lookup a shared parent
+                  while(sharedParent<n)
+                  {
+                      // loop through parent destinations, find a match with potential A or B
+                   for(int childA:graph.adj.get(sharedParent))
+                   {
+                       // if destination matches source A
+                       if(childA == potentialSrcA)
+                       {
+                           // check if there is a second child that also matches source B
+                            for(int childB:graph.adj.get(sharedParent))
+                            {
+                                if(childB==potentialSrcB)
+                                {
+                                    // we found a diamond !!
+                                    // diamonds have four edges, root to A , root to B , A to bottom , B to bottom;
+                                        List < Edge > diamondEdges =
+                                            Arrays.asList (
+                                                new Edge (sharedParent,potentialSrcA),  // root to A 
+                                                new Edge (sharedParent, potentialSrcB), // root to B
+                                                new Edge (potentialSrcA, destFromA), // A to bottom
+                                                new Edge (potentialSrcB, destFromB) // B to bottom
+                                                );
+                                         // create a diamond graph
+                                        Graph diamond = new Graph (diamondEdges);
+                                        // insert it to result
+                                        result.add(diamond);
+                                        // cache sourceA
+                                        cachedDiamondsSources.add(potentialSrcA);
+    
+                                }
+                            }
+                       }
+                   }
+                   sharedParent++;   
+                  }
+                }
+    
+                }
+            potentialSrcB++;
+        }
+    }
+ 
+      potentialSrcA++;
+ 
+    }
+ 
+      return result;
+ 
+    }
+  }
+ 
+  public static void main (String[]args)
+  {
+ 
+ 
+    List < Edge > edges =
+      Arrays.asList (new Edge (0, 1), new Edge (0, 2), new Edge (1, 3),
+             new Edge (2, 3));
+ 
+ 
+    Graph graph = new Graph (edges);
+ 
+    List<Graph> diamonds = Graph.DiamondGraph (graph);
+    for(Graph g:diamonds){
+        g.printGraph();
+    }
+ 
+  }
+}
